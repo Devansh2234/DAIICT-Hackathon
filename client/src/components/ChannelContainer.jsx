@@ -39,4 +39,4 @@ const ChannelContainer = ({ isCreating, setIsCreating, isEditing, setIsEditing, 
     );
 }
 
-export default ChannelContainer;
+export default ChannelContainer
