@@ -17,22 +17,6 @@ const App = () => {
         <Chat client={client} theme='team light'>
             <ChannelListContainer />
             <ChannelContainer />
-            <ChannelList
-                filters={{}}
-                channelRenderFilterFn={() => {}}
-                List={(listProps) => (
-                    <TeamChannelList
-                        {...listProps}
-                        type='team'
-                    />
-                )}
-                Preview={(previewProps) => (
-                    <TeamChannelPreview
-                        {...previewProps}
-                        type='team'
-                    />
-                )}
-            />
         </Chat>
     </div>
   )
