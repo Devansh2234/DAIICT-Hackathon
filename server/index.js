@@ -1,21 +1,59 @@
-const express = require('express');
-const cors = require('cors');
+const { connect } = require('getstream');
+const bcrypt = require('bcrypt');
+const StreamChat = require('stream-chat').StreamChat;
+const crypto = require('crypto');
 
-const authRoutes = require("./routes/auth.js")
+require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const api_key = process.env.STREAM_API_KEY;
+const api_secret = process.env.STREAM_API_SECRET;
+const app_id = process.env.STREAM_APP_ID;
 
-require('dotenv').config()
+const signup = async (req, res) => {
+    try {
+        const { fullName, username, password, phoneNumber } = req.body;
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded())
+        const userId = crypto.randomBytes(16).toString('hex');
 
-app.get('/', (req, res) => {
-    res.send("Hello World");
-});
+        const serverClient = connect(api_key, api_secret, app_id);
 
-app.use('/auth', authRoutes);
+        const  hashedPassword = await bcrypt.hash(password, 10);
 
-app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+        const token = serverClient.createUserToken(userId);
+
+        res.status(200).json({ token, fullName, username, userId, hashedPassword, phoneNumber });
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ message: error });
+    }
+};
+
+const login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        
+        const serverClient = connect(api_key, api_secret, app_id);
+        const client = StreamChat.getInstance(api_key, api_secret);
+
+        const { users } = await client.queryUsers({ name: username });
+
+        if(!users.length) return res.status(400).json({ message: 'User not found' });
+
+        const success = await bcrypt.compare(password, users[0].hashedPassword);
+
+        const token = serverClient.createUserToken(users[0].id);
+
+        if(success) {
+            res.status(200).json({ token, fullName: users[0].fullName, username, userId: users[0].id});
+        } else {
+            res.status(500).json({ message: 'Incorrect password' });
+        }
+    } catch (error) {ads
+        console.log(error);
+
+        res.status(500).json({ message: error });
+    }
+};
+
+module.exports = { signup, login }
